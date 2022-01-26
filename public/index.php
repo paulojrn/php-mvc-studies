@@ -1,17 +1,26 @@
 <?php
 
-$pathInfo = "listar-cursos";
+require __DIR__ . "/../vendor/autoload.php";
+
+use Alura\Cursos\Controller\InterfaceControladorRequisicao;
+
+/**
+ * @var InterfaceControladorRequisicao $controlador
+ */
+
+$rotas = require __DIR__ . "/../configs/routes.php";
+$caminho = "/listar-cursos";
+
 
 if (array_key_exists("PATH_INFO", $_SERVER)) {
-    $pathInfo = str_replace("/", "", $_SERVER["PATH_INFO"]);
+    $caminho = $_SERVER["PATH_INFO"];
+    
+    if (!array_key_exists($caminho, $rotas)) {
+        http_response_code(404);
+        exit();
+    }
 }
 
-$routeList = ["listar-cursos", "novo-curso"];
-$selectedRoute = "";
-
-if(!in_array($pathInfo, $routeList, true)) {
-    var_dump("Erro ao informar URL!");
-    exit();
-}
-
-require "$pathInfo.php";
+$classeControladora = $rotas[$caminho];
+$controlador = new $classeControladora();
+$controlador->processaRequisicao();
