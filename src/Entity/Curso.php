@@ -14,6 +14,7 @@ class Curso
      * @Column(type="integer")
      */
     private $id;
+    
     /**
      * @Column(type="string")
      */

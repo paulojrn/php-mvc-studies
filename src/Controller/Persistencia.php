@@ -17,7 +17,14 @@ class Persistencia implements InterfaceControladorRequisicao
     public function processaRequisicao(): void
     {
         $descricao = $_POST["descricao"];
-        $curso = new Curso();
+
+        if (array_key_exists("id-curso", $_POST)) {
+            $id = $_POST["id-curso"];
+            $curso = $this->entityManager->find(Curso::class, $id);
+        } else {
+            $curso = new Curso();
+        }
+
         $curso->setDescricao($descricao);
 
         $this->entityManager->persist($curso);
