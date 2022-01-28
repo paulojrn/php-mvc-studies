@@ -21,6 +21,13 @@ if (array_key_exists("PATH_INFO", $_SERVER)) {
     }
 }
 
+session_start();
+
+if (!array_key_exists("logado", $_SESSION) && $caminho !== "/login" && $caminho !== "/realiza-login") {
+    header("Location: /login");
+    exit();
+}
+
 $classeControladora = $rotas[$caminho];
 $controlador = new $classeControladora();
 $controlador->processaRequisicao();
