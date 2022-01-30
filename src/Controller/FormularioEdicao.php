@@ -4,32 +4,39 @@ namespace Alura\Cursos\Controller;
 
 use Alura\Cursos\Entity\Curso;
 use Alura\Cursos\Helper\RenderizadorHtmlTrait;
-use Alura\Cursos\Infra\EntityManagerCreator;
+use Doctrine\ORM\EntityManagerInterface;
+use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class FormularioEdicao implements InterfaceControladorRequisicao
+class FormularioEdicao implements RequestHandlerInterface
 {
     use RenderizadorHtmlTrait;
     
     private $entityManager;
 
-    public function __construct()
+    public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->entityManager = (new EntityManagerCreator())->getEntityManager();
+        $this->entityManager = $entityManager;
     }
 
-    public function processaRequisicao(): void
+    public function handle(ServerRequestInterface $requisicao): ResponseInterface
     {
-        $id = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
+        // $id = filter_input(INPUT_GET, "id", FILTER_VALIDATE_INT);
+        
+        $get = $requisicao->getQueryParams();
+        $id = filter_var($get["id"], FILTER_VALIDATE_INT);
 
         if (is_null($id) || ($id === false)) {
-            header("Location: /listar-cursos");
-            return;
+            return new Response(200, ["Location" => "/listar-cursos"]);
         }
-
         
-        echo $this->renderizaHtml("cursos/formulario.php", [
+        $html = $this->renderizaHtml("cursos/formulario.php", [
             "curso" => $this->entityManager->find(Curso::class, $id),
             "titulo" => "Alterar curso"
         ]);
+
+        return new Response(200, [], $html);
     }
 }

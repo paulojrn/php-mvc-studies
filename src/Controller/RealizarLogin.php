@@ -5,51 +5,58 @@ namespace Alura\Cursos\Controller;
 use Alura\Cursos\Entity\Usuario;
 use Alura\Cursos\Helper\FlashMessageTrait;
 use Alura\Cursos\Infra\EntityManagerCreator;
+use Doctrine\ORM\EntityManagerInterface;
+use Nyholm\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
-class RealizarLogin implements InterfaceControladorRequisicao
+class RealizarLogin implements RequestHandlerInterface
 {
     use FlashMessageTrait;
 
     private $entityManager;
     private $usuarioRepo;
 
-    public function __construct()
+    public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->entityManager = (new EntityManagerCreator())->getEntityManager();
+        $this->entityManager = $entityManager;
         $this->usuarioRepo = $this->entityManager->getRepository(Usuario::class);
     }
 
-    public function processaRequisicao(): void
+    public function handle(ServerRequestInterface $requisicao): ResponseInterface
     {
-        $email = filter_input(
-            INPUT_POST,
-            "email",
-            FILTER_VALIDATE_EMAIL
-        );
+        // $email = filter_input(
+        //     INPUT_POST,
+        //     "email",
+        //     FILTER_VALIDATE_EMAIL
+        // );
+
+        $post = $requisicao->getParsedBody();
+        $email = filter_var($post["email"], FILTER_VALIDATE_EMAIL);
+
+        $respostaLogin = new Response(200, ["Location" => "/login"]);
 
         if (is_null($email) || $email === false) {
             $this->defineMensagem("danger", "Email digitado não é um email válido");
-
-            header("Location: /login");
-            return;
+            
+            return $respostaLogin;
         }
 
-        // $senha = filter_input(
-        //     INPUT_POST,
-        //     "senha",
-        //     FILTER_SANITIZE_STRING
-        // );
+        $email = filter_var($post["email"]);
 
         if (!array_key_exists("senha", $_POST)) {
-            echo "Informe uma senha";
-            return;
+            $this->defineMensagem("danger", "Informe uma senha");
+
+            return $respostaLogin;
         }
 
         $senha = $_POST["senha"];
 
         if (is_null($senha) || $senha === false) {
-            echo "Senha inválida";
-            return;
+            $this->defineMensagem("danger", "Senha inválida");
+
+            return $respostaLogin;
         }
 
         /** @var Usuario */
@@ -58,13 +65,11 @@ class RealizarLogin implements InterfaceControladorRequisicao
         if(is_null($usuario) || !$usuario->senhaEstaCorreta($senha)) {
             $this->defineMensagem("danger", "Email ou senha falsa");
 
-            header("Location: /login");
-            return;
+            return $respostaLogin;
         }
 
         $_SESSION["logado"] = true;
 
-        header("Location: /listar-cursos");
-
+        return new Response(200, ["Location" => "/listar-cursos"]);
     }
 }
